@@ -8,7 +8,7 @@ from time import sleep
 import struct
 
 
-printerMACAddress = 'XX:XX:XX:XX:XX:XX'
+printerMACAddress = 'D1:DE:4C:DD:9D:56'
 printerWidth = 384
 port = 2
 
@@ -80,7 +80,7 @@ def printImage(soc, im):
         im = padded_image
         
     
-    im = im.rotate(180) #print it so it looks right when spewing out of the mouth
+    #im = im.rotate(180) #print it so it looks right when spewing out of the mouth
     
     # if image is not 1-bit, convert it
     if im.mode != '1':
@@ -109,9 +109,9 @@ def printImage(soc, im):
                                                                   int(im.size[1] / 256)), 
                                                                   im.tobytes()))
     initilizePrinter(soc)  
-    sleep(.5)    
-    sendStartPrintSequence(soc)
-    sleep(.5)
+    #sleep(.5)    
+    #sendStartPrintSequence(soc)
+    #sleep(.5)
     soc.send(buf)
     sleep(.5)
     sendEndPrintSequence(soc)
@@ -133,7 +133,7 @@ sleep(0.5)
 img = PIL.Image.open("Turtle.jpg")
 
 #Create image from text
-#text = "Line 1\nLine 2\nLine 3"
+text = "Line 1\nLine 2\nLine 3"
 #img = create_text(text,font_size=65)
 
 
