@@ -4,11 +4,14 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import PIL.ImageChops
 import PIL.ImageOps
+from sys import argv,exit
 from time import sleep
 import struct
 
 
-printerMACAddress = 'XX:XX:XX:XX:XX:XX'
+# printerMACAddress = 'XX:XX:XX:XX:XX:XX'
+printerMACAddress = 'D1:DE:4C:DD:9D:56'
+
 printerWidth = 384
 port = 2
 
@@ -118,25 +121,27 @@ def printImage(soc, im):
     sleep(.5)
 
 
-s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-s.connect((printerMACAddress,port))
+if(len(argv) >= 2):
+    print("your selected file >>" +argv[1])
+    s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+    s.connect((printerMACAddress,port))
 
-print("Connecting to printer...")
-getPrinterStatus(s)
-sleep(0.5)
-getPrinterSerialNumber(s)
-sleep(0.5)
-getPrinterProductInfo(s)
-sleep(0.5)
+    print("Connecting to printer...")
+    getPrinterStatus(s)
+    sleep(0.5)
+    getPrinterSerialNumber(s)
+    sleep(0.5)
+    getPrinterProductInfo(s)
+    sleep(0.5)
 
-#Read Image File
-img = PIL.Image.open("Turtle.jpg")
+    #Read Image File
+    img = PIL.Image.open(argv[1])
 
-#Create image from text
-#text = "Line 1\nLine 2\nLine 3"
-#img = create_text(text,font_size=65)
+    #Create image from text
+    #text = "Line 1\nLine 2\nLine 3"
+    #img = create_text(text,font_size=65)
 
 
-printImage(s,img)
-s.close()
+    printImage(s,img)
+    s.close()
 
