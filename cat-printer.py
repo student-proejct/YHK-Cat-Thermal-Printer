@@ -71,6 +71,7 @@ def get_wrapped_text(text: str, font: PIL.ImageFont.ImageFont,
 
 
 def printImage(soc, im):
+    format = im.format
     if im.width > printerWidth:
         # image is wider than printer resolution; scale it down proportionately
         height = int(im.height * (printerWidth / im.width))
@@ -101,7 +102,9 @@ def printImage(soc, im):
 
     # Invert image, via greyscale for compatibility
     #  (no, I don't know why I need to do this)
-    im = PIL.ImageOps.invert(im.convert('L'))
+    if(format == 'JPEG'): # jpeg image need to invert allways
+        im = PIL.ImageOps.invert(im);
+    im = im.convert('L');
     # ... and now convert back to single bit
     im = im.convert('1')
 
