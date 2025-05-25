@@ -3,7 +3,7 @@ import os
 import json
 
 def getBlutoothMac():
-    if (os.path.exists(path := 'config.json')):
+    if (os.path.exists(path := os.path.dirname(__file__)+'/config.json')):
         with open(path, encoding='UTF-8') as f:
             data = f.read()
             try:
