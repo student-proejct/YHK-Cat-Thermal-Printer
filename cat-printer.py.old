@@ -4,7 +4,7 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import PIL.ImageChops
 import PIL.ImageOps
-from sys import argv, exit
+from sys import argv,exit
 from time import sleep
 import struct
 
@@ -19,42 +19,35 @@ port = 2
 def initilizePrinter(soc):
     soc.send(b"\x1b\x40")
 
-
 def getPrinterStatus(soc):
     soc.send(b"\x1e\x47\x03")
     return soc.recv(38)
-
 
 def getPrinterSerialNumber(soc):
     soc.send(b"\x1D\x67\x39")
     return soc.recv(21)
 
-
 def getPrinterProductInfo(soc):
     soc.send(b"\x1d\x67\x69")
     return soc.recv(16)
 
-
 def sendStartPrintSequence(soc):
     soc.send(b"\x1d\x49\xf0\x19")
-
 
 def sendEndPrintSequence(soc):
     soc.send(b"\x0a\x0a\x0a\x0a")
 
 
 def trimImage(im):
-    bg = PIL.Image.new(im.mode, im.size, (255, 255, 255))
+    bg = PIL.Image.new(im.mode, im.size, (255,255,255))
     diff = PIL.ImageChops.difference(im, bg)
     diff = PIL.ImageChops.add(diff, diff, 2.0)
     bbox = diff.getbbox()
     if bbox:
-        # don't cut off the end of the image
-        return im.crop((bbox[0], bbox[1], bbox[2], bbox[3]+10))
-
+        return im.crop((bbox[0],bbox[1],bbox[2],bbox[3]+10)) # don't cut off the end of the image
 
 def create_text(text, font_name="Lucon.ttf", font_size=12):
-    img = PIL.Image.new('RGB', (printerWidth, 5000), color=(255, 255, 255))
+    img = PIL.Image.new('RGB', (printerWidth, 5000), color = (255, 255, 255))
     font = PIL.ImageFont.truetype(font_name, font_size)
 
     d = PIL.ImageDraw.Draw(img)
@@ -62,9 +55,8 @@ def create_text(text, font_name="Lucon.ttf", font_size=12):
     for line in text.splitlines():
         lines.append(get_wrapped_text(line, font, printerWidth))
     lines = "\n".join(lines)
-    d.text((0, 0), lines, fill=(0, 0, 0), font=font)
+    d.text((0,0), lines, fill=(0,0,0), font=font)
     return trimImage(img)
-
 
 def get_wrapped_text(text: str, font: PIL.ImageFont.ImageFont,
                      line_length: int):
@@ -78,24 +70,44 @@ def get_wrapped_text(text: str, font: PIL.ImageFont.ImageFont,
     return '\n'.join(lines)
 
 
-def standardizeImage(im: PIL.Image) -> PIL.Image:
-    im = im.convert('L')
+def printImage(soc, im):
+    format = im.format
     if im.width > printerWidth:
         # image is wider than printer resolution; scale it down proportionately
         height = int(im.height * (printerWidth / im.width))
         im = im.resize((printerWidth, height))
-    return PIL.ImageOps.invert(im.convert("L"))
+
+    if im.width < printerWidth:
+        # image is narrower than printer resolution; pad it out with white pixels
+        padded_image = PIL.Image.new("1", (printerWidth, im.height), 1)
+        padded_image.paste(im)
+        im = padded_image
 
 
-def printImage(soc, im):
-    # print it so it looks right when spewing out of the mouth
-    im = standardizeImage(im).rotate(180).convert("1")
+    im = im.rotate(180) #print it so it looks right when spewing out of the mouth
 
+    # if image is not 1-bit, convert it
+    if im.mode != '1':
+        im = im.convert('1')
+
+
+    # if image width is not a multiple of 8 pixels, fix that
     if im.size[0] % 8:
-            im2 = PIL.Image.new('1', (im.size[0] + 8 - im.size[0] % 8,
-                            im.size[1]), 'white')
-            im2.paste(im, (0, 0))
-            im = im2
+        im2 = Image.new('1', (im.size[0] + 8 - im.size[0] % 8,
+                        im.size[1]), 'white')
+        im2.paste(im, (0, 0))
+        im = im2
+
+
+
+    # Invert image, via greyscale for compatibility
+    #  (no, I don't know why I need to do this)
+    if(format == 'JPEG'): # jpeg image need to invert allways
+        im = PIL.ImageOps.invert(im);
+    im = im.convert('L');
+    # ... and now convert back to single bit
+    im = im.convert('1')
+
     buf = b''.join((bytearray(b'\x1d\x76\x30\x00'),
                                           struct.pack('2B', int(im.size[0] / 8 % 256),
                                                       int(im.size[0] / 8 / 256)),
