@@ -7,10 +7,14 @@ import PIL.ImageOps
 from sys import argv, exit
 from time import sleep
 import struct
+import config
 
 
 # printerMACAddress = 'XX:XX:XX:XX:XX:XX'
-printerMACAddress = 'D1:DE:4C:DD:9D:56'
+printerMACAddress = config.getBlutoothMac()
+if not printerMACAddress:
+   print("Printer MAC address not configured Please add configuration file to printer app")
+   exit
 
 printerWidth = 384
 port = 2
