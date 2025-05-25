@@ -20,9 +20,9 @@ def initilizePrinter(soc):
     soc.send(b"\x1b\x40")
 
 
-def getPrinterStatus(soc):
+def getPrinterStatus(soc: socket.socket) -> str:
     soc.send(b"\x1e\x47\x03")
-    return soc.recv(38)
+    return soc.recv(1024).decode('UTF-8')
 
 
 def getPrinterSerialNumber(soc):
@@ -92,16 +92,16 @@ def printImage(soc, im):
     im = standardizeImage(im).rotate(180).convert("1")
 
     if im.size[0] % 8:
-            im2 = PIL.Image.new('1', (im.size[0] + 8 - im.size[0] % 8,
-                            im.size[1]), 'white')
-            im2.paste(im, (0, 0))
-            im = im2
+        im2 = PIL.Image.new('1', (im.size[0] + 8 - im.size[0] % 8,
+                                  im.size[1]), 'white')
+        im2.paste(im, (0, 0))
+        im = im2
     buf = b''.join((bytearray(b'\x1d\x76\x30\x00'),
-                                          struct.pack('2B', int(im.size[0] / 8 % 256),
-                                                      int(im.size[0] / 8 / 256)),
-                                                      struct.pack('2B', int(im.size[1] % 256),
-                                                                  int(im.size[1] / 256)),
-                                                                  im.tobytes()))
+                    struct.pack('2B', int(im.size[0] / 8 % 256),
+                                int(im.size[0] / 8 / 256)),
+                    struct.pack('2B', int(im.size[1] % 256),
+                                int(im.size[1] / 256)),
+                    im.tobytes()))
     initilizePrinter(soc)
     sleep(.5)
     sendStartPrintSequence(soc)
@@ -112,27 +112,26 @@ def printImage(soc, im):
     sleep(.5)
 
 
-if(len(argv) >= 2):
-    print("your selected file >>" +argv[1])
-    s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-    s.connect((printerMACAddress,port))
+if (len(argv) >= 2):
+    print("your selected file >>" + argv[1])
+    s = socket.socket(socket.AF_BLUETOOTH,
+                      socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+    s.connect((printerMACAddress, port))
 
     print("Connecting to printer...")
-    getPrinterStatus(s)
+    print("Printer Status: \t" + getPrinterStatus(s))
     sleep(0.5)
     getPrinterSerialNumber(s)
     sleep(0.5)
     getPrinterProductInfo(s)
     sleep(0.5)
 
-    #Read Image File
+    # Read Image File
     img = PIL.Image.open(argv[1])
 
-    #Create image from text
-    #text = "Line 1\nLine 2\nLine 3"
-    #img = create_text(text,font_size=65)
-
+    # Create image from text
+    # text = "Line 1\nLine 2\nLine 3"
+    # img = create_text(text,font_size=65)
 
     printImage(s,img)
     s.close()
-
