@@ -2,6 +2,9 @@ import struct
 from sys import argv
 import PIL.Image
 import PIL.ImageOps
+import re
+import requests
+from io import BytesIO
 
 printerWidth = 384
 
@@ -18,4 +21,12 @@ def printImage(im: PIL.Image):
 
 
 if (len(argv) >= 2):
-    printImage(PIL.Image.open(argv[1]))
+    if (re.compile(r'^http?s://')):
+        try:
+            response = requests.get(argv[1], stream=True)
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            printImage(PIL.Image.open(BytesIO(response.content)))
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching image from URL: {e}")
+    else:
+        printImage(PIL.Image.open(argv[1]))
