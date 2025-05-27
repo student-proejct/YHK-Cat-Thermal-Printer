@@ -7,14 +7,15 @@ import PIL.ImageOps
 from sys import argv, exit
 from time import sleep
 import struct
-import config
+import config,re,requests
+from io import BytesIO
 
 
 # printerMACAddress = 'XX:XX:XX:XX:XX:XX'
 printerMACAddress = config.getBlutoothMac()
 if not printerMACAddress:
    print("Printer MAC address not configured Please add configuration file to printer app")
-   exit
+   exit()
 
 printerWidth = 384
 port = 2
@@ -131,7 +132,16 @@ if (len(argv) >= 2):
     sleep(0.5)
 
     # Read Image File
-    img = PIL.Image.open(argv[1])
+    #img = PIL.Image.open(argv[1])
+    if (re.compile(r'^http?s://')):
+        try:
+            response = requests.get(argv[1], stream=True)
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            img = PIL.Image.open(BytesIO(response.content))
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching image from URL: {e}")
+    else:
+        img  = PIL.Image.open(argv[1])
 
     # Create image from text
     # text = "Line 1\nLine 2\nLine 3"
