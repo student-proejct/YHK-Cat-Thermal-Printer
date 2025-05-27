@@ -21,7 +21,7 @@ def printImage(im: PIL.Image):
 
 
 if (len(argv) >= 2):
-    if (re.compile(r'^http?s://')):
+    if (re.search(r'^http?s://', argv[1])):
         try:
             response = requests.get(argv[1], stream=True)
             response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
